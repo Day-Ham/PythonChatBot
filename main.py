@@ -1,13 +1,17 @@
 from typing import Final
 from telegram import Update
 from telegram.ext import Application,CommandHandler,MessageHandler,filters,ContextTypes
+from openai import OpenAI
+client = 'Insert API Key Here'
 
+chat_history = [{"role": "system", "content": "You are friend that is helping them to learn korean currently graded at C9. you only speak in korean"}]
+conversation = []
+TOKEN:Final = 'Insert Bot Token Here'
 
-TOKEN:Final = '7762935962:AAERpZ846viV9cXZJj8DLug25IWsQzBsooM'
-
-BOT_USERNAME: Final='@Daelingo_bot'
+BOT_USERNAME: Final='Insert Bot Name Here'
 
 async def start_command(update:Update,context:ContextTypes.DEFAULT_TYPE):
+    
     await update.message.reply_text('Hey You Look lonely I can fix that by being your friend :D')
 
 async def help_command(update:Update,context:ContextTypes.DEFAULT_TYPE):
@@ -33,16 +37,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     print(f'User ({update.message.chat.id}) in {message_type}')
 
-    if message_type == 'group':
-        if BOT_USERNAME in text:
-            new_text:str =text.replace(BOT_USERNAME, '').strip()
-            response:str = handle_response(new_text)
-        else:
-            return 
-    else:
-        response:str = handle_response(text)
-    print('BOT: ', response)
-    await update.message.reply_text(response)
+    chat_history.append({"role": "user", "content": text})
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=chat_history
+    )
+
+    reply = response.choices[0].message.content.strip()
+    response:str = handle_response(text)
+    print('BOT: ', reply)
+    await update.message.reply_text(reply)
 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused error {context.error}')
@@ -64,4 +68,4 @@ if __name__=='__main__':
     app.add_error_handler(error)
 
     print('Polling...')
-    app.run_polling(poll_interval=3)
+    app.run_polling(poll_interval=0.0)
